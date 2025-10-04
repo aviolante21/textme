@@ -18,12 +18,11 @@
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
 
-  <!-- Superphone / phone input CSS -->
+  <!-- Superphone / phone input CSS (from widget + iti) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="https://cdn.superphone.io/widgets/widget.css" />
 
   <style>
-    /* Full-bleed background on the page itself */
     html, body {
       height: 100%;
       margin: 0;
@@ -44,16 +43,14 @@
 
     .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
 
-    /* Let widget sit on transparent bg to show your hero image */
     #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
       background-color: transparent !important;
     }
 
-    /* Copy + input styling to match your brand */
     #superphone-widget-title { color: #ffffff !important; letter-spacing: .5px; }
     #superphone-widget-description {
       color: #cfcfcf !important;
-      font-size: 20px !important;   /* Keep this at 20px */
+      font-size: 20px !important;   /* keep instruction line at 20px */
       line-height: 1.4;
       text-align: center;
       margin-top: 10px;
@@ -128,50 +125,50 @@
   <!-- JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
-  <!-- Phone utils + plugin (widget uses this; we don't re-init) -->
-  <script src="https://unpkg.com/libphonenumber-js@1.9.50/bundle/libphonenumber-min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/intlTelInput-jquery.min.js" integrity="sha512-+xuLsxQN3JBrnBSAr/vOlUqZfQ0OwpqZfdbuiQVpzjd5Y85F8F2AyzP4YNVDrpR29EolzELxc62br5gWK51phQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
-  <!-- Superphone widget core -->
+  <!-- Superphone widget core (bundles its own iti version) -->
   <script src="https://cdn.superphone.io/widgets/widget.min.js"></script>
 
-  <!-- Widget config + enforce US on all devices -->
+  <!-- Widget config + safe US enforcement using intlTelInputGlobals -->
   <script>
-    // Configure the Superphone widget
+    // Configure the widget
     window.sp = { widgetHash: 'ERbDAE', type: 'page' };
 
-    // After widget initializes, force USA (handles mobile geo-IP overrides)
-    (function enforceUSCountry() {
-      var tries = 0, maxTries = 30;
+    // Gently force US AFTER the widget initializes its phone input.
+    (function enforceUSCountrySafely() {
+      var tries = 0, maxTries = 40;
 
-      function setUS() {
-        var $input = $('#phone');
-        if (!$input.length) return false;
+      function getIti() {
+        var input = document.getElementById('phone');
+        if (!input || !window.intlTelInputGlobals) return null;
+        return window.intlTelInputGlobals.getInstance(input) || null;
+      }
 
-        var iti = $input.data('intlTelInput');
+      function setUSOnce() {
+        var iti = getIti();
         if (!iti) return false;
-
-        try {
-          $input.intlTelInput('setCountry', 'us'); // hard-set to USA
-          // Optional: show US/CA/GB at top of list
-          // $input.intlTelInput('setPreferredCountries', ['us','ca','gb']);
-        } catch (e) {}
+        try { iti.setCountry('us'); } catch (e) {}
         return true;
       }
 
       function tick() {
-        if (setUS() || ++tries >= maxTries) return;
-        setTimeout(tick, 150); // retry until widget finishes attaching
+        if (setUSOnce() || ++tries >= maxTries) return;
+        setTimeout(tick, 150); // retry until the widget finishes attaching iti
       }
 
-      // Kick off after load
-      window.addEventListener('load', function(){ setTimeout(tick, 150); });
+      // Start retries a moment after load
+      window.addEventListener('load', function () { setTimeout(tick, 200); });
 
-      // Safety nets: re-apply on focus and after a country pick (some UAs re-geo)
-      $(document)
-        .on('focus', '#phone', function(){ try { $(this).intlTelInput('setCountry','us'); } catch(e){} })
-        .on('close:countrydropdown', function(){ try { $('#phone').intlTelInput('setCountry','us'); } catch(e){} });
+      // If the widget re-geo-detects on focus and flips it, we gently nudge back if empty
+      document.addEventListener('focusin', function (e) {
+        if (e.target && e.target.id === 'phone') {
+          var iti = getIti();
+          if (!iti) return;
+          // only force back to US if user hasn't typed anything yet
+          if ((e.target.value || '').trim() === '') {
+            try { iti.setCountry('us'); } catch (e) {}
+          }
+        }
+      });
     })();
   </script>
 
