@@ -44,7 +44,6 @@
 
     /* Keep headings centered like before */
     .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
-    .landing-header p  { font-size: 20px; margin-top: 0; }
 
     /* Let widget sit on transparent bg to show your hero image */
     #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
@@ -53,7 +52,13 @@
 
     /* Minor visual tune so it matches your brand */
     #superphone-widget-title { color: #ffffff !important; letter-spacing: .5px; }
-    #superphone-widget-description { color: #cfcfcf !important; }
+    #superphone-widget-description {
+      color: #cfcfcf !important;
+      font-size: 20px !important; /* <- ADDED font-size change */
+      line-height: 1.4;
+      text-align: center;
+      margin-top: 10px;
+    }
     .superphone-send-button #submitButton {
       background: #CFB46E !important;
       color: #FFFFFF !important;
@@ -76,13 +81,15 @@
       </div>
 
       <!-- ===============================
-           REPLACED: old phone form removed
-           INSERTED: Superphone landing widget
+           Superphone landing widget
            =============================== -->
       <div id="superphone-widget-page" style="background: transparent; font-family:Circular, Arial;">
         <div id="superphone-widget-wrapper">
           <div id="superphone-widget-landing-wrapper" class="superphone-widget widget-landing">
-            <div id="superphone-widget-description">PLEASE ENTER YOUR PHONE NUMBER BELOW<br>AND I WILL SHOOT YOU A TEXT RIGHT BACK</vr></div>
+            <div id="superphone-widget-description">
+              PLEASE ENTER YOUR PHONE NUMBER BELOW<br>
+              AND I WILL SHOOT YOU A TEXT RIGHT BACK:
+            </div>
 
             <!-- Keep form id & fields as the widget expects -->
             <form id="addContact" action="#" method="POST" autocomplete="off">
@@ -117,7 +124,7 @@
     </div>
   </div>
 
-  <!-- JS (keep lean; remove old custom submit + old intlTelInput util) -->
+  <!-- JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
   <script src="https://unpkg.com/libphonenumber-js@1.9.50/bundle/libphonenumber-min.js"></script>
