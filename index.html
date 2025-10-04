@@ -42,19 +42,16 @@
       padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* Keep headings centered like before */
     .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
 
-    /* Let widget sit on transparent bg to show your hero image */
     #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
       background-color: transparent !important;
     }
 
-    /* Minor visual tune so it matches your brand */
     #superphone-widget-title { color: #ffffff !important; letter-spacing: .5px; }
     #superphone-widget-description {
       color: #cfcfcf !important;
-      font-size: 20px !important; /* <- ADDED font-size change */
+      font-size: 20px !important;
       line-height: 1.4;
       text-align: center;
       margin-top: 10px;
@@ -70,6 +67,12 @@
       background-color: #111 !important;
       color: #fff !important;
     }
+
+    /* Make dropdown country list text black */
+    .iti__country-list .iti__country-name,
+    .iti__country-list .iti__dial-code {
+      color: #000 !important;
+    }
   </style>
 </head>
 
@@ -80,9 +83,6 @@
         <h1>ANTHONY VIOLANTE</h1>
       </div>
 
-      <!-- ===============================
-           Superphone landing widget
-           =============================== -->
       <div id="superphone-widget-page" style="background: transparent; font-family:Circular, Arial;">
         <div id="superphone-widget-wrapper">
           <div id="superphone-widget-landing-wrapper" class="superphone-widget widget-landing">
@@ -91,7 +91,6 @@
               AND I WILL SHOOT YOU A TEXT RIGHT BACK:
             </div>
 
-            <!-- Keep form id & fields as the widget expects -->
             <form id="addContact" action="#" method="POST" autocomplete="off">
               <div id="superphone-input-wrapper">
                 <div class="phone-input-wrapper">
@@ -120,7 +119,6 @@
           </div>
         </div>
       </div>
-      <!-- /widget -->
     </div>
   </div>
 
@@ -133,18 +131,22 @@
   <!-- Superphone widget core -->
   <script src="https://cdn.superphone.io/widgets/widget.min.js"></script>
 
-  <!-- Widget config -->
+  <!-- Init intlTelInput with US default -->
   <script>
+    $(function() {
+      $("#phone").intlTelInput({
+        initialCountry: "us",  // <-- Force USA as default
+        nationalMode: false,
+        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js"
+      });
+    });
+
     window.sp = {
-      widgetHash: 'ERbDAE',   // <-- your widget ID
-      type: 'page',
-      // Optional callbacks if you want custom behavior:
-      // submitSuccess: function(result){ console.log('success', result); },
-      // submitFail: function(xhr, textStatus){ console.log('fail', textStatus); }
+      widgetHash: 'ERbDAE',
+      type: 'page'
     };
   </script>
 
-  <!-- Bootstrap JS (optional — only if you still need it elsewhere) -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
           integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
           crossorigin="anonymous"></script>
