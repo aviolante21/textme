@@ -9,26 +9,18 @@
   <meta name="theme-color" content="#000000" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
-  <!-- JS -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/parsley.js/2.0.7/parsley.js"></script>
-  <script src="https://superphone.io/f/assets/javascripts/intlTelInput.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-          integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-          crossorigin="anonymous"></script>
-
   <!-- Favicon -->
   <link rel="shortcut icon" href="https://app.superphone.io/favicon.ico" type="image/x-icon">
 
-  <!-- CSS -->
+  <!-- Fonts + CSS -->
   <link href="https://fonts.googleapis.com/css?family=Oswald:300" rel="stylesheet">
-  <link rel="stylesheet" href="https://superphone.io/f/assets/stylesheets/intlTelInput.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
-        integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU"
-        crossorigin="anonymous">
+
+  <!-- Superphone widget CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="https://cdn.superphone.io/widgets/widget.css" />
 
   <style>
     /* Full-bleed background on the page itself */
@@ -46,159 +38,110 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100dvh;                /* dynamic viewport height for mobile */
-      padding-bottom: env(safe-area-inset-bottom); /* avoids overlap with iOS home bar */
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
     }
 
-    button#submitButton {
+    /* Keep headings centered like before */
+    .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
+    .landing-header p  { font-size: 20px; margin-top: 0; }
+
+    /* Let widget sit on transparent bg to show your hero image */
+    #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
+      background-color: transparent !important;
+    }
+
+    /* Minor visual tune so it matches your brand */
+    #superphone-widget-title { color: #ffffff !important; letter-spacing: .5px; }
+    #superphone-widget-description { color: #cfcfcf !important; }
+    .superphone-send-button #submitButton {
+      background: #CFB46E !important;
+      color: #FFFFFF !important;
+      border: 0 !important;
       text-transform: uppercase;
-      margin: 15px 0;
-      width: 100%;
-      color: #fff;
-      padding: 8px 45px;
-      font-size: 19px;
-      border: 1px solid #fff;
-      border-radius: 0;
-      background: #101010;
+      letter-spacing: .5px;
     }
-    button#submitButton:hover {
-      color: #000;
-      background: #fff;
+    .superphone-form-control {
+      background-color: #111 !important;
+      color: #fff !important;
     }
-
-    span.country-name {
-      color: #000;
-      padding: 5px;
-      font-size: 16px;
-    }
-
-    input#phone {
-      letter-spacing: 1px;
-      color: #fff;
-      border: 0;
-      border-bottom: 2px solid #fff;
-      background: #000;
-      padding: 26px 46px;
-      font-size: 15px;
-      border-radius: 0;
-      font-weight: 700;
-    }
-    input#phone:focus { box-shadow: none; }
-
-    input[type=text] {
-      width: 100%;
-      padding: 12px 20px;
-      margin: 8px 0;
-      display: inline-block;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-      height: 38px;
-    }
-
-    .form-error {
-      padding-left: 12px;
-      display: none;
-      color: #ffffff;
-    }
-
-    .form-success {
-      background: #000;
-      color: #fff;
-      font-size: 19px;
-      width: 100%;
-      text-align: center;
-      margin-top: 61px;
-      display: none;
-      border-radius: 5px;
-      padding: 5px;
-    }
-
-    .parsley-required,
-    .parsley-minlength { padding-top: 5px; color: #D85959; }
-
-    /* Remove this override unless you truly intend to replace flag sprites */
-    /* .iti-flag { background-image: url("https://getrichwithryan.com/grwr_bg.png"); } */
-
-    .buto { text-align: center; }
   </style>
-
-  <script>
-    $(function () {
-      // Set up phone widget
-      $("#phone").intlTelInput({
-        utilsScript: 'https://superphone.io/f/assets/javascripts/utils.js',
-        numberType: "MOBILE",
-        nationalMode: false,
-        autoFormat: true,
-        autoPlaceholder: true
-      });
-
-      // Submit
-      $('#addContact').on('submit', function (event) {
-        event.preventDefault();
-        var formData = $("#addContact").serializeArray();
-        $('#submitButton').prop('disabled', true);
-        $('.form-error').hide();
-
-        var requestData = {};
-        formData.forEach(function (el) { requestData[el.name] = el.value; });
-
-        $.ajax({
-          url: 'https://aviolante.superphone.io/f/vXdIVn',   // ensure full https:// URL
-          type: "POST",
-          dataType: 'json',
-          contentType: 'application/json',
-          data: JSON.stringify(requestData),
-          success: function () {
-            $('.custom-form').hide();
-            $('.form-success').show();
-          },
-          error: function () {
-            $('.form-error').show();
-            $('#submitButton').prop('disabled', false);
-          }
-        });
-      });
-    });
-  </script>
 </head>
 
 <body>
   <div class="page-center">
-    <div class="custom-form">
-      <div class="container">
-        <h1 class="text-center" style="font-weight: bold">ANTHONY VIOLANTE</h1>
-        <p class="text-center" style="font-size: 20px">
-          PLEASE ENTER YOUR PHONE NUMBER BELOW<br>
-          AND I WILL SHOOT YOU A TEXT RIGHT BACK:
-        </p>
-
-        <form id="addContact" class="form-horizontal" style="min-width: 100%" method="POST" action="#" autocomplete="off" data-parsley-validate>
-          <div class="form-group">
-            <div class="col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3 col-xs-10 col-xs-offset-1 col-lg-4 col-lg-offset-4">
-              <input autocomplete="off" tabindex="4" type="tel" class="form-control" id="phone" name="mobile"
-                     placeholder="Mobile # (w/country code)" data-parsley-trigger="focusout"
-                     data-parsley-minlength="9" data-parsley-required>
-            </div>
-            <div class="col-md-6 col-md-offset-3 col-sm-6 col-sm-offset-3 col-xs-10 col-xs-offset-1 col-lg-4 col-lg-offset-4">
-              <button type="submit" id="submitButton" class="btn btn-default">Submit</button>
-            </div>
-          </div>
-
-          <div class="form-group" style="padding-left: 12px">
-            <div class="form-error container">
-              <div class="buto">Something went wrong. Please check your mobile and try again.</div>
-            </div>
-          </div>
-        </form>
+    <div class="container">
+      <div class="landing-header text-center">
+        <h1>ANTHONY VIOLANTE</h1>
+        <p>Let’s connect.</p>
       </div>
 
-      <!-- Success text -->
-      <div class="form-success">
-        <h1>Just texted you - please check your messages.</h1>
+      <!-- ===============================
+           REPLACED: old phone form removed
+           INSERTED: Superphone landing widget
+           =============================== -->
+      <div id="superphone-widget-page" style="background: transparent; font-family:Circular, Arial;">
+        <div id="superphone-widget-wrapper">
+          <div id="superphone-widget-landing-wrapper" class="superphone-widget widget-landing">
+            <div id="superphone-widget-title">Subscribe to SMS and get 10% Off</div>
+            <div id="superphone-widget-description">Enter your phone number and we’ll send you a promo code and future offers</div>
+
+            <!-- Keep form id & fields as the widget expects -->
+            <form id="addContact" action="#" method="POST" autocomplete="off">
+              <div id="superphone-input-wrapper">
+                <div class="phone-input-wrapper">
+                  <input
+                    autocomplete="off"
+                    tabindex="4"
+                    type="tel"
+                    class="superphone-form-control"
+                    id="phone"
+                    name="mobile"
+                    placeholder="Mobile # (w/ country code)"
+                  >
+                </div>
+                <div class="superphone-send-button">
+                  <button type="submit" id="submitButton">Send</button>
+                </div>
+              </div>
+
+              <div id="form-error-message" class="form-error" style="display:none;color:#fff;margin-top:8px;">
+                <div>Something went wrong. Please check your mobile and try again.</div>
+              </div>
+              <div id="form-error-mobile" class="form-error" style="display:none;color:#fff;margin-top:8px;">
+                Phone Number is not valid
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
+      <!-- /widget -->
     </div>
   </div>
+
+  <!-- JS (keep lean; remove old custom submit + old intlTelInput util) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.1/dist/js.cookie.min.js"></script>
+  <script src="https://unpkg.com/libphonenumber-js@1.9.50/bundle/libphonenumber-min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/intlTelInput-jquery.min.js" integrity="sha512-+xuLsxQN3JBrnBSAr/vOlUqZfQ0OwpqZfdbuiQVpzjd5Y85F8F2AyzP4YNVDrpR29EolzELxc62br5gWK51phQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- Superphone widget core -->
+  <script src="https://cdn.superphone.io/widgets/widget.min.js"></script>
+
+  <!-- Widget config -->
+  <script>
+    window.sp = {
+      widgetHash: 'ERbDAE',   // <-- your widget ID
+      type: 'page',
+      // Optional callbacks if you want custom behavior:
+      // submitSuccess: function(result){ console.log('success', result); },
+      // submitFail: function(xhr, textStatus){ console.log('fail', textStatus); }
+    };
+  </script>
+
+  <!-- Bootstrap JS (optional — only if you still need it elsewhere) -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+          integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+          crossorigin="anonymous"></script>
 </body>
 </html>
