@@ -42,6 +42,7 @@
       background-color: transparent !important;
     }
 
+    /* Instruction line at 20px */
     #superphone-widget-description {
       color: #cfcfcf !important;
       font-size: 20px !important;
@@ -50,41 +51,51 @@
       margin: 10px 0 16px;
     }
 
-    /* Unified input row */
+    /* ========== Unified input row (compact) ========== */
     #superphone-input-wrapper {
       display: flex;
-      align-items: center;
-      border: 2px solid #fff;
-      border-radius: 8px;
+      align-items: stretch;
+      border: 1px solid #fff;          /* thinner border */
+      border-radius: 10px;
       overflow: visible;
+      height: 44px;                    /* compact overall height */
     }
-    .phone-input-wrapper { flex: 1 1 auto; position: relative; }
+
+    .phone-input-wrapper {
+      flex: 1 1 auto;
+      position: relative;
+      display: flex;
+      align-items: stretch;
+    }
+
     .superphone-form-control {
       width: 100%;
-      height: 52px !important;
+      height: 100% !important;         /* match wrapper height */
       background-color: #111 !important;
       color: #fff !important;
-      border: none !important;
-      border-radius: 6px 0 0 6px !important;
-      padding-left: 96px !important; /* space for flag + dial code */
+      border: 0 !important;            /* border handled by wrapper */
+      border-radius: 10px 0 0 10px !important;
+      padding-left: 92px !important;   /* room for flag + dial code */
+      padding-right: 12px !important;
+      line-height: 42px !important;
+      text-align: left !important;     /* avoid centered placeholder */
     }
     .superphone-form-control::placeholder { color: rgba(255,255,255,0.6); }
 
-    /* Submit button (updated) */
     .superphone-send-button { flex: 0 0 auto; }
     .superphone-send-button #submitButton {
-      height: 52px !important;
-      background: #FFFFFF !important;   /* White background */
-      color: #000000 !important;        /* Black text */
+      height: 100% !important;         /* match wrapper height */
+      background: #FFFFFF !important;  /* your request */
+      color: #000000 !important;       /* your request */
       border: 0 !important;
       text-transform: uppercase;
       letter-spacing: .5px;
       font-weight: bold;
-      padding: 0 24px;
-      border-radius: 0 6px 6px 0 !important;
+      padding: 0 22px;
+      border-radius: 0 10px 10px 0 !important;
     }
 
-    /* Country dropdown fixes */
+    /* ===== Country dropdown fixes & readability ===== */
     #superphone-widget-page,
     #superphone-widget-wrapper,
     #superphone-widget-landing-wrapper,
@@ -101,6 +112,8 @@
     }
     .iti__country-list .iti__country-name,
     .iti__country-list .iti__dial-code { color: #000 !important; }
+
+    /* separateDialCode aesthetics on dark input */
     .iti--separate-dial-code .iti__selected-dial-code { color: #fff; }
   </style>
 </head>
@@ -112,7 +125,7 @@
         <h1>ANTHONY VIOLANTE</h1>
       </div>
 
-      <!-- Superphone widget -->
+      <!-- Superphone landing widget -->
       <div id="superphone-widget-page" style="background: transparent; font-family:Circular, Arial;">
         <div id="superphone-widget-wrapper">
           <div id="superphone-widget-landing-wrapper" class="superphone-widget widget-landing">
@@ -161,32 +174,70 @@
   <script>
     window.sp = { widgetHash: 'ERbDAE', type: 'page' };
 
-    (function reinitForFlagAndDialCode() {
-      var tries = 0, maxTries = 60;
-      function ready() { return !!(window.intlTelInput && window.intlTelInputGlobals && document.getElementById('phone')); }
-      function run() {
-        var input = document.getElementById('phone');
-        if (!input) return false;
-        var existing = window.intlTelInputGlobals.getInstance(input);
-        if (existing && existing.destroy) existing.destroy();
+    /**
+     * Robust re-init using a MutationObserver so we never fight the widget.
+     * - Ensures flag + +1 (separateDialCode)
+     * - US default + preferred countries
+     * - Keeps user changes intact after init
+     */
+    (function ensureFlagDialAndUS() {
+      var input = document.getElementById('phone');
+      if (!input) return;
+
+      function applyITI() {
+        if (!(window.intlTelInput && window.intlTelInputGlobals)) return false;
+
+        // Destroy any existing instance first
+        var exist = window.intlTelInputGlobals.getInstance(input);
+        if (exist && exist.destroy) exist.destroy();
+
         try {
           var iti = window.intlTelInput(input, {
-            initialCountry: "us",
-            preferredCountries: ["us","ca","gb"],
+            initialCountry: 'us',
+            preferredCountries: ['us','ca','gb'],
             nationalMode: false,
             separateDialCode: true,
-            autoPlaceholder: "polite",
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js"
+            autoPlaceholder: 'polite',
+            utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js'
           });
-          input.addEventListener('focus', function(){
-            if ((input.value || '').trim() === '') { try { iti.setCountry('us'); } catch(e){} }
+
+          // Keep US on first focus if empty (mobile geo can flip pre-focus)
+          input.addEventListener('focus', function() {
+            if ((input.value || '').trim() === '') {
+              try { iti.setCountry('us'); } catch(e){}
+            }
           });
-        } catch (e) { return false; }
-        return true;
+          return true;
+        } catch (e) {
+          return false;
+        }
       }
-      function tick() { if ((ready() && run()) || ++tries >= maxTries) return; setTimeout(tick, 120); }
-      window.addEventListener('load', function(){ setTimeout(tick, 220); });
+
+      // Try after load, then watch for widget changes
+      window.addEventListener('load', function() {
+        // Initial attempts with backoff
+        var tries = 0, maxTries = 30;
+        (function tick(){
+          if (applyITI() || ++tries >= maxTries) return;
+          setTimeout(tick, 120);
+        })();
+      });
+
+      // If widget mutates the phone field later, re-apply once
+      var mo = new MutationObserver(function(muts){
+        for (var i=0;i<muts.length;i++){
+          if (muts[i].target === input || (muts[i].addedNodes && muts[i].addedNodes.length)) {
+            applyITI();
+            break;
+          }
+        }
+      });
+      mo.observe(document.body, { childList: true, subtree: true, attributes: true });
     })();
   </script>
+
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+          integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+          crossorigin="anonymous"></script>
 </body>
 </html>
