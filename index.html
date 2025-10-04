@@ -38,11 +38,12 @@
 
     .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
 
+    /* Transparent widget panel */
     #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
       background-color: transparent !important;
     }
 
-    /* Instruction line at 20px */
+    /* Instruction copy (20px) */
     #superphone-widget-description {
       color: #cfcfcf !important;
       font-size: 20px !important;
@@ -51,42 +52,41 @@
       margin: 10px 0 16px;
     }
 
-    /* ========== Unified input row (compact) ========== */
+    /* === Unified input row (compact) === */
     #superphone-input-wrapper {
       display: flex;
       align-items: stretch;
-      border: 1px solid #fff;          /* thinner border */
+      border: 1px solid #fff;
       border-radius: 10px;
       overflow: visible;
-      height: 44px;                    /* compact overall height */
+      height: 44px;                 /* compact row */
     }
-
     .phone-input-wrapper {
       flex: 1 1 auto;
       position: relative;
       display: flex;
       align-items: stretch;
+      overflow: visible;
     }
-
     .superphone-form-control {
       width: 100%;
-      height: 100% !important;         /* match wrapper height */
+      height: 100% !important;
       background-color: #111 !important;
       color: #fff !important;
-      border: 0 !important;            /* border handled by wrapper */
+      border: 0 !important;
       border-radius: 10px 0 0 10px !important;
       padding-left: 92px !important;   /* room for flag + dial code */
       padding-right: 12px !important;
       line-height: 42px !important;
-      text-align: left !important;     /* avoid centered placeholder */
+      text-align: left !important;
     }
     .superphone-form-control::placeholder { color: rgba(255,255,255,0.6); }
 
     .superphone-send-button { flex: 0 0 auto; }
     .superphone-send-button #submitButton {
-      height: 100% !important;         /* match wrapper height */
-      background: #FFFFFF !important;  /* your request */
-      color: #000000 !important;       /* your request */
+      height: 100% !important;
+      background: #FFFFFF !important;
+      color: #000000 !important;
       border: 0 !important;
       text-transform: uppercase;
       letter-spacing: .5px;
@@ -95,14 +95,17 @@
       border-radius: 0 10px 10px 0 !important;
     }
 
-    /* ===== Country dropdown fixes & readability ===== */
+    /* === Country dropdown visibility & readability === */
     #superphone-widget-page,
     #superphone-widget-wrapper,
     #superphone-widget-landing-wrapper,
     #superphone-input-wrapper,
     .phone-input-wrapper { overflow: visible !important; }
+
     .iti { position: relative !important; }
     .iti__selected-flag { background: transparent !important; }
+
+    /* The list will be appended to <body>, so just make sure it's on top */
     .iti__country-list {
       z-index: 99999 !important;
       background-color: #fff !important;
@@ -169,25 +172,25 @@
   <!-- JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://cdn.superphone.io/widgets/widget.min.js"></script>
+  <!-- utils.js enables formatting/validation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <script>
     window.sp = { widgetHash: 'ERbDAE', type: 'page' };
 
     /**
-     * Robust re-init using a MutationObserver so we never fight the widget.
-     * - Ensures flag + +1 (separateDialCode)
-     * - US default + preferred countries
-     * - Keeps user changes intact after init
+     * Final, robust init:
+     *  - Destroys any widget-created instance on #phone
+     *  - Re-inits with separateDialCode + US default
+     *  - Appends the dropdown list to <body> to avoid clipping (key fix)
      */
-    (function ensureFlagDialAndUS() {
+    (function initPhone() {
       var input = document.getElementById('phone');
       if (!input) return;
 
       function applyITI() {
         if (!(window.intlTelInput && window.intlTelInputGlobals)) return false;
 
-        // Destroy any existing instance first
         var exist = window.intlTelInputGlobals.getInstance(input);
         if (exist && exist.destroy) exist.destroy();
 
@@ -196,16 +199,14 @@
             initialCountry: 'us',
             preferredCountries: ['us','ca','gb'],
             nationalMode: false,
-            separateDialCode: true,
+            separateDialCode: true,                          // show flag + +1
+            dropdownContainer: document.body,                // <-- append to <body> (fix)
             autoPlaceholder: 'polite',
             utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js'
           });
 
-          // Keep US on first focus if empty (mobile geo can flip pre-focus)
           input.addEventListener('focus', function() {
-            if ((input.value || '').trim() === '') {
-              try { iti.setCountry('us'); } catch(e){}
-            }
+            if ((input.value || '').trim() === '') { try { iti.setCountry('us'); } catch(e){} }
           });
           return true;
         } catch (e) {
@@ -213,9 +214,8 @@
         }
       }
 
-      // Try after load, then watch for widget changes
-      window.addEventListener('load', function() {
-        // Initial attempts with backoff
+      // Try after load with a short backoff
+      window.addEventListener('load', function () {
         var tries = 0, maxTries = 30;
         (function tick(){
           if (applyITI() || ++tries >= maxTries) return;
@@ -223,7 +223,7 @@
         })();
       });
 
-      // If widget mutates the phone field later, re-apply once
+      // If the widget mutates the input later, re-apply once
       var mo = new MutationObserver(function(muts){
         for (var i=0;i<muts.length;i++){
           if (muts[i].target === input || (muts[i].addedNodes && muts[i].addedNodes.length)) {
