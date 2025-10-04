@@ -52,10 +52,13 @@
       margin: 10px 0 16px;
     }
 
-    /* Input & button (minimal, non-invasive) */
+    /* Input & button */
     .superphone-form-control {
       background-color: #111 !important;
       color: #fff !important;
+      /* Make room for the flag so it doesn't sit on top of the placeholder */
+      padding-left: 52px !important;
+      text-align: left !important;
     }
     .superphone-form-control::placeholder { color: rgba(255,255,255,0.6); }
 
@@ -68,11 +71,31 @@
       border: 0 !important;
     }
 
-    /* Country dropdown readability on dark bg (CSS only, no JS changes) */
-    .iti__country-list { background-color: #fff !important; }
+    /* --- Country dropdown visibility fixes (CSS-only) --- */
+    /* The iti wrapper and its parents must allow overflow */
+    #superphone-widget-page,
+    #superphone-widget-wrapper,
+    #superphone-widget-landing-wrapper,
+    #superphone-input-wrapper,
+    .phone-input-wrapper,
+    .phone-input-wrapper .iti {
+      overflow: visible !important;
+    }
+
+    /* Ensure the flag area is clickable and on top of the input */
+    .iti { position: relative !important; }
+    .iti__flag-container { z-index: 3 !important; }   /* sits above the input */
+    .iti__selected-flag { background: transparent !important; }
+
+    /* Country list sits above everything */
+    .iti__country-list {
+      z-index: 99999 !important;
+      background-color: #fff !important;
+      border: 1px solid rgba(0,0,0,.15);
+      box-shadow: 0 6px 12px rgba(0,0,0,.18);
+    }
     .iti__country-list .iti__country-name,
     .iti__country-list .iti__dial-code { color: #000 !important; }
-    .iti__selected-flag { background: transparent !important; }
   </style>
 </head>
 
