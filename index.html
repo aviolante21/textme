@@ -18,7 +18,7 @@
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
 
-  <!-- Superphone / phone input CSS (from widget + iti) -->
+  <!-- Phone input + Superphone widget CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="https://cdn.superphone.io/widgets/widget.css" />
 
@@ -30,7 +30,6 @@
       color: #fff;
       -webkit-tap-highlight-color: transparent;
     }
-
     * { font-family: Oswald, sans-serif; }
 
     .page-center {
@@ -43,18 +42,21 @@
 
     .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
 
+    /* Widget on transparent bg */
     #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
       background-color: transparent !important;
     }
 
-    #superphone-widget-title { color: #ffffff !important; letter-spacing: .5px; }
+    /* Instruction line at 20px */
     #superphone-widget-description {
       color: #cfcfcf !important;
-      font-size: 20px !important;   /* keep instruction line at 20px */
+      font-size: 20px !important;
       line-height: 1.4;
       text-align: center;
       margin-top: 10px;
     }
+
+    /* Input + button styling */
     .superphone-form-control {
       background-color: #111 !important;
       color: #fff !important;
@@ -67,10 +69,27 @@
       letter-spacing: .5px;
     }
 
-    /* Phone dropdown readability on dark theme */
-    .iti__country-list { background-color: #fff !important; }
+    /* ---- Country dropdown FIXES ---- */
+    /* Let the dropdown escape any clipping parents */
+    #superphone-widget-page,
+    #superphone-widget-wrapper,
+    #superphone-widget-landing-wrapper,
+    #superphone-input-wrapper,
+    .phone-input-wrapper {
+      overflow: visible !important;
+    }
+    /* Positioning + stacking so the list opens above all UI */
+    .iti { position: relative !important; }
+    .iti__country-list {
+      z-index: 99999 !important;
+      background-color: #fff !important;
+      border: 1px solid rgba(0,0,0,.15);
+      box-shadow: 0 6px 12px rgba(0,0,0,.18);
+    }
     .iti__country-list .iti__country-name,
     .iti__country-list .iti__dial-code { color: #000 !important; }
+    .iti__selected-flag { background: transparent !important; }
+    /* -------------------------------- */
   </style>
 </head>
 
@@ -125,15 +144,13 @@
   <!-- JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
-  <!-- Superphone widget core (bundles its own iti version) -->
+  <!-- Superphone widget core (includes its own intl-tel-input) -->
   <script src="https://cdn.superphone.io/widgets/widget.min.js"></script>
 
-  <!-- Widget config + safe US enforcement using intlTelInputGlobals -->
+  <!-- Widget config + set default to US after init (non-destructive) -->
   <script>
-    // Configure the widget
     window.sp = { widgetHash: 'ERbDAE', type: 'page' };
 
-    // Gently force US AFTER the widget initializes its phone input.
     (function enforceUSCountrySafely() {
       var tries = 0, maxTries = 40;
 
@@ -152,21 +169,16 @@
 
       function tick() {
         if (setUSOnce() || ++tries >= maxTries) return;
-        setTimeout(tick, 150); // retry until the widget finishes attaching iti
+        setTimeout(tick, 150);
       }
 
-      // Start retries a moment after load
       window.addEventListener('load', function () { setTimeout(tick, 200); });
 
-      // If the widget re-geo-detects on focus and flips it, we gently nudge back if empty
+      // If user hasn't typed yet, keep US on first focus (handles odd mobile geo flips)
       document.addEventListener('focusin', function (e) {
-        if (e.target && e.target.id === 'phone') {
+        if (e.target && e.target.id === 'phone' && (e.target.value || '').trim() === '') {
           var iti = getIti();
-          if (!iti) return;
-          // only force back to US if user hasn't typed anything yet
-          if ((e.target.value || '').trim() === '') {
-            try { iti.setCountry('us'); } catch (e) {}
-          }
+          if (iti) { try { iti.setCountry('us'); } catch(e){} }
         }
       });
     })();
