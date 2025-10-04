@@ -4,21 +4,26 @@
   <meta charset="utf-8" />
   <title>Text Anthony Violante</title>
 
+  <!-- Responsive + iOS safe areas -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
+  <!-- Favicon -->
   <link rel="shortcut icon" href="https://app.superphone.io/favicon.ico" type="image/x-icon">
+
+  <!-- Fonts + CSS -->
   <link href="https://fonts.googleapis.com/css?family=Oswald:300" rel="stylesheet">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
 
-  <!-- Widget + phone CSS (widget brings its own iti; we don't re-init it) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/css/intlTelInput.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- Superphone / phone input CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="https://cdn.superphone.io/widgets/widget.css" />
 
   <style>
+    /* Full-bleed background on the page itself */
     html, body {
       height: 100%;
       margin: 0;
@@ -26,6 +31,7 @@
       color: #fff;
       -webkit-tap-highlight-color: transparent;
     }
+
     * { font-family: Oswald, sans-serif; }
 
     .page-center {
@@ -38,62 +44,34 @@
 
     .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
 
-    /* Keep widget transparent over hero */
+    /* Let widget sit on transparent bg to show your hero image */
     #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
       background-color: transparent !important;
     }
 
-    /* Instruction line at 20px */
+    /* Copy + input styling to match your brand */
+    #superphone-widget-title { color: #ffffff !important; letter-spacing: .5px; }
     #superphone-widget-description {
       color: #cfcfcf !important;
-      font-size: 20px !important;
+      font-size: 20px !important;   /* Keep this at 20px */
       line-height: 1.4;
       text-align: center;
-      margin: 10px 0 16px;
+      margin-top: 10px;
     }
-
-    /* Input & button */
     .superphone-form-control {
       background-color: #111 !important;
       color: #fff !important;
-      /* Make room for the flag so it doesn't sit on top of the placeholder */
-      padding-left: 52px !important;
-      text-align: left !important;
     }
-    .superphone-form-control::placeholder { color: rgba(255,255,255,0.6); }
-
     .superphone-send-button #submitButton {
-      background: #FFFFFF !important;   /* white */
-      color: #000000 !important;        /* black */
-      text-transform: uppercase;
-      font-weight: bold;
-      letter-spacing: .5px;
+      background: #CFB46E !important;
+      color: #FFFFFF !important;
       border: 0 !important;
+      text-transform: uppercase;
+      letter-spacing: .5px;
     }
 
-    /* --- Country dropdown visibility fixes (CSS-only) --- */
-    /* The iti wrapper and its parents must allow overflow */
-    #superphone-widget-page,
-    #superphone-widget-wrapper,
-    #superphone-widget-landing-wrapper,
-    #superphone-input-wrapper,
-    .phone-input-wrapper,
-    .phone-input-wrapper .iti {
-      overflow: visible !important;
-    }
-
-    /* Ensure the flag area is clickable and on top of the input */
-    .iti { position: relative !important; }
-    .iti__flag-container { z-index: 3 !important; }   /* sits above the input */
-    .iti__selected-flag { background: transparent !important; }
-
-    /* Country list sits above everything */
-    .iti__country-list {
-      z-index: 99999 !important;
-      background-color: #fff !important;
-      border: 1px solid rgba(0,0,0,.15);
-      box-shadow: 0 6px 12px rgba(0,0,0,.18);
-    }
+    /* Phone dropdown readability on dark theme */
+    .iti__country-list { background-color: #fff !important; }
     .iti__country-list .iti__country-name,
     .iti__country-list .iti__dial-code { color: #000 !important; }
   </style>
@@ -129,7 +107,7 @@
                   >
                 </div>
                 <div class="superphone-send-button">
-                  <button type="submit" id="submitButton">SUBMIT</button>
+                  <button type="submit" id="submitButton">Send</button>
                 </div>
               </div>
 
@@ -147,18 +125,57 @@
     </div>
   </div>
 
-  <!-- JS: only the widget (no extra iti scripts, no re-init) -->
+  <!-- JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+  <!-- Phone utils + plugin (widget uses this; we don't re-init) -->
+  <script src="https://unpkg.com/libphonenumber-js@1.9.50/bundle/libphonenumber-min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/intlTelInput-jquery.min.js" integrity="sha512-+xuLsxQN3JBrnBSAr/vOlUqZfQ0OwpqZfdbuiQVpzjd5Y85F8F2AyzP4YNVDrpR29EolzELxc62br5gWK51phQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- Superphone widget core -->
   <script src="https://cdn.superphone.io/widgets/widget.min.js"></script>
 
-  <!-- Widget config (no custom hooks touching the input) -->
+  <!-- Widget config + enforce US on all devices -->
   <script>
-    window.sp = {
-      widgetHash: 'ERbDAE',
-      type: 'page'
-    };
+    // Configure the Superphone widget
+    window.sp = { widgetHash: 'ERbDAE', type: 'page' };
+
+    // After widget initializes, force USA (handles mobile geo-IP overrides)
+    (function enforceUSCountry() {
+      var tries = 0, maxTries = 30;
+
+      function setUS() {
+        var $input = $('#phone');
+        if (!$input.length) return false;
+
+        var iti = $input.data('intlTelInput');
+        if (!iti) return false;
+
+        try {
+          $input.intlTelInput('setCountry', 'us'); // hard-set to USA
+          // Optional: show US/CA/GB at top of list
+          // $input.intlTelInput('setPreferredCountries', ['us','ca','gb']);
+        } catch (e) {}
+        return true;
+      }
+
+      function tick() {
+        if (setUS() || ++tries >= maxTries) return;
+        setTimeout(tick, 150); // retry until widget finishes attaching
+      }
+
+      // Kick off after load
+      window.addEventListener('load', function(){ setTimeout(tick, 150); });
+
+      // Safety nets: re-apply on focus and after a country pick (some UAs re-geo)
+      $(document)
+        .on('focus', '#phone', function(){ try { $(this).intlTelInput('setCountry','us'); } catch(e){} })
+        .on('close:countrydropdown', function(){ try { $('#phone').intlTelInput('setCountry','us'); } catch(e){} });
+    })();
   </script>
 
+  <!-- Bootstrap JS (optional) -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
           integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
           crossorigin="anonymous"></script>
