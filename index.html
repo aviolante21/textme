@@ -4,17 +4,21 @@
   <meta charset="utf-8" />
   <title>Text Anthony Violante</title>
 
+  <!-- Responsive + iOS safe areas -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
+  <!-- Favicon -->
   <link rel="shortcut icon" href="https://app.superphone.io/favicon.ico" type="image/x-icon">
+
+  <!-- Fonts + CSS -->
   <link href="https://fonts.googleapis.com/css?family=Oswald:300" rel="stylesheet">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
 
-  <!-- Phone input + Superphone widget CSS -->
+  <!-- Superphone / phone input CSS (from widget + iti) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/css/intlTelInput.css" integrity="sha512-gxWow8Mo6q6pLa1XH/CcH8JyiSDEtiwJV78E+D+QP0EVasFs8wKXq16G8CLD4CJ2SnonHr4Lm/yY2fSI2+cbmw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="https://cdn.superphone.io/widgets/widget.css" />
 
@@ -26,6 +30,7 @@
       color: #fff;
       -webkit-tap-highlight-color: transparent;
     }
+
     * { font-family: Oswald, sans-serif; }
 
     .page-center {
@@ -38,27 +43,21 @@
 
     .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
 
-    /* Widget on transparent bg */
     #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
       background-color: transparent !important;
     }
 
-    /* Instruction copy */
+    #superphone-widget-title { color: #ffffff !important; letter-spacing: .5px; }
     #superphone-widget-description {
       color: #cfcfcf !important;
-      font-size: 20px !important;
+      font-size: 20px !important;   /* keep instruction line at 20px */
       line-height: 1.4;
       text-align: center;
       margin-top: 10px;
     }
-
-    /* Input + button styling */
     .superphone-form-control {
       background-color: #111 !important;
       color: #fff !important;
-      border: 1px solid #fff !important;
-      border-radius: 6px !important;
-      height: 48px !important;
     }
     .superphone-send-button #submitButton {
       background: #CFB46E !important;
@@ -66,23 +65,12 @@
       border: 0 !important;
       text-transform: uppercase;
       letter-spacing: .5px;
-      height: 48px !important;
-      border-radius: 6px !important;
     }
 
-    /* Make the iti dropdown readable */
+    /* Phone dropdown readability on dark theme */
     .iti__country-list { background-color: #fff !important; }
     .iti__country-list .iti__country-name,
     .iti__country-list .iti__dial-code { color: #000 !important; }
-
-    /* When using separateDialCode, input needs left padding for dial code */
-    .iti--separate-dial-code .iti__selected-dial-code { color: #fff; }
-    .iti--separate-dial-code input.superphone-form-control {
-      padding-left: 92px !important; /* room for flag + +1 */
-    }
-
-    /* Keep flag visible on dark background */
-    .iti__selected-flag { background: transparent !important; }
   </style>
 </head>
 
@@ -137,64 +125,54 @@
   <!-- JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
-  <!-- Superphone widget core (loads its own iti) -->
+  <!-- Superphone widget core (bundles its own iti version) -->
   <script src="https://cdn.superphone.io/widgets/widget.min.js"></script>
-  <!-- Utils is safe to load (enables formatting/validation) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+  <!-- Widget config + safe US enforcement using intlTelInputGlobals -->
   <script>
-    // Configure widget
+    // Configure the widget
     window.sp = { widgetHash: 'ERbDAE', type: 'page' };
 
-    /**
-     * Re-init the phone input AFTER the widget attaches it, so we can
-     * enable separateDialCode + force US without breaking the dropdown.
-     */
-    (function reinitPhoneWithSeparateDial() {
-      var tries = 0, maxTries = 50;
+    // Gently force US AFTER the widget initializes its phone input.
+    (function enforceUSCountrySafely() {
+      var tries = 0, maxTries = 40;
 
-      function ready() {
-        return window.intlTelInput && document.getElementById('phone');
+      function getIti() {
+        var input = document.getElementById('phone');
+        if (!input || !window.intlTelInputGlobals) return null;
+        return window.intlTelInputGlobals.getInstance(input) || null;
       }
 
-      function run() {
-        var input = document.getElementById('phone');
-        if (!input) return false;
-
-        // If widget already initialized iti, destroy it cleanly.
-        if (window.intlTelInputGlobals) {
-          var existing = window.intlTelInputGlobals.getInstance(input);
-          if (existing && existing.destroy) existing.destroy();
-        }
-
-        // Fresh init with our desired options
-        try {
-          var iti = window.intlTelInput(input, {
-            initialCountry: "us",
-            preferredCountries: ["us","ca","gb"],
-            nationalMode: false,
-            separateDialCode: true,           // <-- shows flag + +1 like your reference
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js"
-          });
-          // Safety: if no value yet and geo flips later, keep US on first focus
-          input.addEventListener('focus', function(){
-            if ((input.value || '').trim() === '') { try { iti.setCountry('us'); } catch(e){} }
-          });
-        } catch (e) {
-          return false;
-        }
+      function setUSOnce() {
+        var iti = getIti();
+        if (!iti) return false;
+        try { iti.setCountry('us'); } catch (e) {}
         return true;
       }
 
       function tick() {
-        if ((ready() && run()) || ++tries >= maxTries) return;
-        setTimeout(tick, 120);
+        if (setUSOnce() || ++tries >= maxTries) return;
+        setTimeout(tick, 150); // retry until the widget finishes attaching iti
       }
 
-      window.addEventListener('load', function(){ setTimeout(tick, 200); });
+      // Start retries a moment after load
+      window.addEventListener('load', function () { setTimeout(tick, 200); });
+
+      // If the widget re-geo-detects on focus and flips it, we gently nudge back if empty
+      document.addEventListener('focusin', function (e) {
+        if (e.target && e.target.id === 'phone') {
+          var iti = getIti();
+          if (!iti) return;
+          // only force back to US if user hasn't typed anything yet
+          if ((e.target.value || '').trim() === '') {
+            try { iti.setCountry('us'); } catch (e) {}
+          }
+        }
+      });
     })();
   </script>
 
+  <!-- Bootstrap JS (optional) -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
           integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
           crossorigin="anonymous"></script>
