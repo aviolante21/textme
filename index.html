@@ -4,15 +4,11 @@
   <meta charset="utf-8" />
   <title>Text Anthony Violante</title>
 
-  <!-- Responsive + iOS safe areas -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#000000" />
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
 
-  <!-- Favicon -->
   <link rel="shortcut icon" href="https://app.superphone.io/favicon.ico" type="image/x-icon">
-
-  <!-- Fonts + CSS -->
   <link href="https://fonts.googleapis.com/css?family=Oswald:300" rel="stylesheet">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
         integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
@@ -42,54 +38,70 @@
 
     .landing-header h1 { font-weight: bold; margin-bottom: 10px; }
 
-    /* Widget on transparent bg */
     #superphone-widget-landing-wrapper.superphone-widget.widget-landing {
       background-color: transparent !important;
     }
 
-    /* Instruction line at 20px */
     #superphone-widget-description {
       color: #cfcfcf !important;
       font-size: 20px !important;
       line-height: 1.4;
       text-align: center;
-      margin-top: 10px;
+      margin: 10px 0 16px;
     }
 
-    /* Input + button styling */
+    /* Unified input row */
+    #superphone-input-wrapper {
+      display: flex;
+      align-items: center;
+      border: 2px solid #fff;
+      border-radius: 8px;
+      overflow: visible;
+    }
+    .phone-input-wrapper { flex: 1 1 auto; position: relative; }
     .superphone-form-control {
+      width: 100%;
+      height: 52px !important;
       background-color: #111 !important;
       color: #fff !important;
+      border: none !important;
+      border-radius: 6px 0 0 6px !important;
+      padding-left: 96px !important; /* space for flag + dial code */
     }
+    .superphone-form-control::placeholder { color: rgba(255,255,255,0.6); }
+
+    /* Submit button (updated) */
+    .superphone-send-button { flex: 0 0 auto; }
     .superphone-send-button #submitButton {
-      background: #CFB46E !important;
-      color: #FFFFFF !important;
+      height: 52px !important;
+      background: #FFFFFF !important;   /* White background */
+      color: #000000 !important;        /* Black text */
       border: 0 !important;
       text-transform: uppercase;
       letter-spacing: .5px;
+      font-weight: bold;
+      padding: 0 24px;
+      border-radius: 0 6px 6px 0 !important;
     }
 
-    /* ---- Country dropdown FIXES ---- */
-    /* Let the dropdown escape any clipping parents */
+    /* Country dropdown fixes */
     #superphone-widget-page,
     #superphone-widget-wrapper,
     #superphone-widget-landing-wrapper,
     #superphone-input-wrapper,
-    .phone-input-wrapper {
-      overflow: visible !important;
-    }
-    /* Positioning + stacking so the list opens above all UI */
+    .phone-input-wrapper { overflow: visible !important; }
     .iti { position: relative !important; }
+    .iti__selected-flag { background: transparent !important; }
     .iti__country-list {
       z-index: 99999 !important;
       background-color: #fff !important;
       border: 1px solid rgba(0,0,0,.15);
       box-shadow: 0 6px 12px rgba(0,0,0,.18);
+      color: #000 !important;
     }
     .iti__country-list .iti__country-name,
     .iti__country-list .iti__dial-code { color: #000 !important; }
-    .iti__selected-flag { background: transparent !important; }
-    /* -------------------------------- */
+    .iti--separate-dial-code .iti__selected-dial-code { color: #fff; }
   </style>
 </head>
 
@@ -100,7 +112,7 @@
         <h1>ANTHONY VIOLANTE</h1>
       </div>
 
-      <!-- Superphone landing widget -->
+      <!-- Superphone widget -->
       <div id="superphone-widget-page" style="background: transparent; font-family:Circular, Arial;">
         <div id="superphone-widget-wrapper">
           <div id="superphone-widget-landing-wrapper" class="superphone-widget widget-landing">
@@ -123,7 +135,7 @@
                   >
                 </div>
                 <div class="superphone-send-button">
-                  <button type="submit" id="submitButton">Send</button>
+                  <button type="submit" id="submitButton">SUBMIT</button>
                 </div>
               </div>
 
@@ -143,50 +155,38 @@
 
   <!-- JS -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-
-  <!-- Superphone widget core (includes its own intl-tel-input) -->
   <script src="https://cdn.superphone.io/widgets/widget.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-  <!-- Widget config + set default to US after init (non-destructive) -->
   <script>
     window.sp = { widgetHash: 'ERbDAE', type: 'page' };
 
-    (function enforceUSCountrySafely() {
-      var tries = 0, maxTries = 40;
-
-      function getIti() {
+    (function reinitForFlagAndDialCode() {
+      var tries = 0, maxTries = 60;
+      function ready() { return !!(window.intlTelInput && window.intlTelInputGlobals && document.getElementById('phone')); }
+      function run() {
         var input = document.getElementById('phone');
-        if (!input || !window.intlTelInputGlobals) return null;
-        return window.intlTelInputGlobals.getInstance(input) || null;
-      }
-
-      function setUSOnce() {
-        var iti = getIti();
-        if (!iti) return false;
-        try { iti.setCountry('us'); } catch (e) {}
+        if (!input) return false;
+        var existing = window.intlTelInputGlobals.getInstance(input);
+        if (existing && existing.destroy) existing.destroy();
+        try {
+          var iti = window.intlTelInput(input, {
+            initialCountry: "us",
+            preferredCountries: ["us","ca","gb"],
+            nationalMode: false,
+            separateDialCode: true,
+            autoPlaceholder: "polite",
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.16/js/utils.js"
+          });
+          input.addEventListener('focus', function(){
+            if ((input.value || '').trim() === '') { try { iti.setCountry('us'); } catch(e){} }
+          });
+        } catch (e) { return false; }
         return true;
       }
-
-      function tick() {
-        if (setUSOnce() || ++tries >= maxTries) return;
-        setTimeout(tick, 150);
-      }
-
-      window.addEventListener('load', function () { setTimeout(tick, 200); });
-
-      // If user hasn't typed yet, keep US on first focus (handles odd mobile geo flips)
-      document.addEventListener('focusin', function (e) {
-        if (e.target && e.target.id === 'phone' && (e.target.value || '').trim() === '') {
-          var iti = getIti();
-          if (iti) { try { iti.setCountry('us'); } catch(e){} }
-        }
-      });
+      function tick() { if ((ready() && run()) || ++tries >= maxTries) return; setTimeout(tick, 120); }
+      window.addEventListener('load', function(){ setTimeout(tick, 220); });
     })();
   </script>
-
-  <!-- Bootstrap JS (optional) -->
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-          integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-          crossorigin="anonymous"></script>
 </body>
 </html>
